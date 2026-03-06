@@ -420,7 +420,6 @@
 <div class="tabs">
   <div class="tab active" onclick="showTab('log')" id="tab-log">Log Shot</div>
   <div class="tab" onclick="showTab('journal')" id="tab-journal">Journal</div>
-  <div class="tab" onclick="showTab('setup')" id="tab-setup">Google Sheets Setup</div>
 </div>
 
 <div class="main">
@@ -463,6 +462,11 @@
           <span class="gb-icon">⚡</span>
           <span class="gb-name">DF54</span>
           <span class="gb-sub">Electric — MiiCoffee</span>
+        </div>
+        <div class="grinder-btn" onclick="pickGrinder(this,'Vietnamese Phin Filter')">
+          <span class="gb-icon">🇻🇳</span>
+          <span class="gb-name">Phin Filter</span>
+          <span class="gb-sub">Vietnamese drip</span>
         </div>
       </div>
       <div style="margin-top:12px;">
@@ -556,8 +560,8 @@
     </div>
   </div>
 
-  <!-- ── SETUP PAGE ── -->
-  <div class="page" id="page-setup">
+  <!-- setup removed -->
+  <div class="page" id="page-setup" style="display:none!important">
 
     <div class="setup-card">
       <div class="setup-title">Google Sheets Integration</div>
@@ -636,17 +640,11 @@ let entries = JSON.parse(localStorage.getItem('noir_shots') || '[]');
 let currentRating = 0;
 let currentGrinder = '';
 let currentTastes = [];
-let sheetsUrl = localStorage.getItem('noir_sheets_url') || '';
+let sheetsUrl = 'https://script.google.com/macros/s/AKfycbxTxAc4vja9L0zp40mQ0idjDwBh2mjd0tmZHEdF0RGsEhPk4usP5-j2h_OlKCLklKNG8Q/exec';
 
 // Init
 window.addEventListener('DOMContentLoaded', () => {
-  if (sheetsUrl) {
-    document.getElementById('sheetsUrl').value = sheetsUrl;
-    updateSheetsStatus();
-  }
   renderJournal();
-
-  // Auto-calc ratio
   ['f-dose','f-yield'].forEach(id => {
     document.getElementById(id).addEventListener('input', calcRatio);
   });
@@ -722,10 +720,8 @@ function saveEntry() {
   entries.unshift(entry);
   localStorage.setItem('noir_shots', JSON.stringify(entries));
 
-  // Send to Google Sheets if configured
-  if (sheetsUrl && !sheetsUrl.includes('YOUR_ID')) {
-    sendToSheets(entry);
-  }
+  // Send to Google Sheets
+  sendToSheets(entry);
 
   showToast('✓ Shot saved to journal');
   resetForm();
@@ -821,21 +817,7 @@ function exportCSV() {
   showToast('CSV downloaded');
 }
 
-// ── SHEETS URL ──
-function saveSheetsUrl() {
-  sheetsUrl = document.getElementById('sheetsUrl').value.trim();
-  localStorage.setItem('noir_sheets_url', sheetsUrl);
-  updateSheetsStatus();
-}
-
-function updateSheetsStatus() {
-  const el = document.getElementById('sheetsStatus');
-  if (sheetsUrl && !sheetsUrl.includes('YOUR_ID') && sheetsUrl.startsWith('https://script.google.com')) {
-    el.innerHTML = `<span class="status-dot dot-green"></span><span class="status-text">Connected — shots will sync to Google Sheets</span>`;
-  } else {
-    el.innerHTML = `<span class="status-dot dot-red"></span><span class="status-text">Not connected — paste your Web App URL above</span>`;
-  }
-}
+// ── SHEETS URL (hardcoded) ──
 
 // ── RESET ──
 function resetForm() {
