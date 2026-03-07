@@ -597,7 +597,6 @@
     .getActiveSpreadsheet()
     .getSheetByName('Shots');
 
-  // Add headers if sheet is empty
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
       'Date','Bean','Roast','Grinder',
@@ -607,7 +606,7 @@
     ]);
   }
 
-  var d = JSON.parse(e.postData.contents);
+  var d = JSON.parse(e.parameter.data);
   sheet.appendRow([
     d.date, d.bean, d.roast, d.grinder,
     d.grindSize, d.dose, d.yield_g,
@@ -615,6 +614,12 @@
     d.rating, d.notes
   ]);
 
+  return ContentService
+    .createTextOutput(JSON.stringify({status:'ok'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
   return ContentService
     .createTextOutput(JSON.stringify({status:'ok'}))
     .setMimeType(ContentService.MimeType.JSON);
@@ -730,12 +735,16 @@ function saveEntry() {
 
 // ── SEND TO SHEETS ──
 function sendToSheets(entry) {
+  // Google Apps Script requires no-cors + form encoded to avoid CORS preflight block
+  const params = new URLSearchParams();
+  params.append('data', JSON.stringify(entry));
+
   fetch(sheetsUrl, {
     method: 'POST',
-    body: JSON.stringify(entry),
-    headers: { 'Content-Type': 'application/json' }
+    mode: 'no-cors',
+    body: params,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   })
-  .then(r => r.json())
   .then(() => showToast('✓ Synced to Google Sheets'))
   .catch(() => showToast('⚠ Saved locally — Sheets sync failed'));
 }
