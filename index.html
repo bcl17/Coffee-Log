@@ -550,7 +550,10 @@
         <div class="sec-label" style="font-size:0.58rem;letter-spacing:0.5em;text-transform:uppercase;color:var(--amber);margin-bottom:4px;">Your shots</div>
         <div id="journalCount" class="journal-count">No entries yet</div>
       </div>
-      <button class="btn btn-ghost" onclick="exportCSV()">Export CSV</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="syncAll()" id="syncBtn">↑ Sync All</button>
+        <button class="btn btn-ghost" onclick="exportCSV()">Export CSV</button>
+      </div>
     </div>
     <div id="journalList">
       <div class="empty-state">
@@ -752,7 +755,27 @@ function sendToSheets(entry) {
   img.onerror = () => showToast('✓ Synced to Google Sheets'); // GAS returns JSON not image, onerror still means it ran
 }
 
-// ── RENDER JOURNAL ──
+// ── SYNC ALL TO SHEETS ──
+function syncAll() {
+  if (!entries.length) { showToast('No entries to sync'); return; }
+  const btn = document.getElementById('syncBtn');
+  btn.textContent = 'Syncing...';
+  btn.disabled = true;
+
+  let i = 0;
+  function syncNext() {
+    if (i >= entries.length) {
+      btn.textContent = '↑ Sync All';
+      btn.disabled = false;
+      showToast('✓ All ' + entries.length + ' entries synced');
+      return;
+    }
+    sendToSheets(entries[i]);
+    i++;
+    setTimeout(syncNext, 400); // small delay between each to avoid overwhelming GAS
+  }
+  syncNext();
+}
 function renderJournal() {
   const list = document.getElementById('journalList');
   const countEl = document.getElementById('journalCount');
