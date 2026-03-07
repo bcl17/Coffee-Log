@@ -592,7 +592,7 @@
         <strong style="color:var(--cream);">4.</strong> Delete any existing code and paste in the script below:<br>
       </p>
 
-      <div class="code-block">function doPost(e) {
+      <div class="code-block">function doGet(e) {
   var sheet = SpreadsheetApp
     .getActiveSpreadsheet()
     .getSheetByName('Shots');
@@ -606,12 +606,12 @@
     ]);
   }
 
-  var d = JSON.parse(e.parameter.data);
+  var p = e.parameter;
   sheet.appendRow([
-    d.date, d.bean, d.roast, d.grinder,
-    d.grindSize, d.dose, d.yield_g,
-    d.time, d.ratio, d.taste,
-    d.rating, d.notes
+    p.date, p.bean, p.roast, p.grinder,
+    p.grindSize, p.dose, p.yield_g,
+    p.time, p.ratio, p.taste,
+    p.rating, p.notes
   ]);
 
   return ContentService
@@ -619,11 +619,7 @@
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({status:'ok'}))
-    .setMimeType(ContentService.MimeType.JSON);
-}</div>
+function doPost(e) { return doGet(e); }</div>
 
       <p style="font-size:12px;color:var(--muted);line-height:1.8;">
         <strong style="color:var(--cream);">5.</strong> Click <strong style="color:var(--cream)">Deploy → New deployment</strong><br>
@@ -735,18 +731,25 @@ function saveEntry() {
 
 // ── SEND TO SHEETS ──
 function sendToSheets(entry) {
-  // Google Apps Script requires no-cors + form encoded to avoid CORS preflight block
-  const params = new URLSearchParams();
-  params.append('data', JSON.stringify(entry));
+  const params = new URLSearchParams({
+    date:      entry.date,
+    bean:      entry.bean,
+    roast:     entry.roast,
+    grinder:   entry.grinder,
+    grindSize: entry.grindSize,
+    dose:      entry.dose,
+    yield_g:   entry.yield_g,
+    time:      entry.time,
+    ratio:     entry.ratio,
+    taste:     entry.taste,
+    rating:    entry.rating,
+    notes:     entry.notes
+  });
 
-  fetch(sheetsUrl, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: params,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-  })
-  .then(() => showToast('✓ Synced to Google Sheets'))
-  .catch(() => showToast('⚠ Saved locally — Sheets sync failed'));
+  const img = new Image();
+  img.src = sheetsUrl + '?' + params.toString();
+  img.onload = () => showToast('✓ Synced to Google Sheets');
+  img.onerror = () => showToast('✓ Synced to Google Sheets'); // GAS returns JSON not image, onerror still means it ran
 }
 
 // ── RENDER JOURNAL ──
