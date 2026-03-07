@@ -724,8 +724,11 @@ function saveEntry() {
   entries.unshift(entry);
   localStorage.setItem('noir_shots', JSON.stringify(entries));
 
-  // Send to Google Sheets
+  // Send to Google Sheets and mark as synced
   sendToSheets(entry);
+  const synced = JSON.parse(localStorage.getItem('noir_synced') || '[]');
+  synced.push(entry.id);
+  localStorage.setItem('noir_synced', JSON.stringify(synced));
 
   showToast('✓ Shot saved to journal');
   resetForm();
@@ -760,21 +763,30 @@ function sendToSheets(entry) {
 // ── SYNC ALL TO SHEETS ──
 function syncAll() {
   if (!entries.length) { showToast('No entries to sync'); return; }
+
+  const synced = JSON.parse(localStorage.getItem('noir_synced') || '[]');
+  const unsynced = entries.filter(e => !synced.includes(e.id));
+
+  if (!unsynced.length) { showToast('All entries already synced'); return; }
+
   const btn = document.getElementById('syncBtn');
   btn.textContent = 'Syncing...';
   btn.disabled = true;
 
   let i = 0;
   function syncNext() {
-    if (i >= entries.length) {
+    if (i >= unsynced.length) {
       btn.textContent = '↑ Sync All';
       btn.disabled = false;
-      showToast('✓ All ' + entries.length + ' entries synced');
+      showToast('✓ ' + unsynced.length + ' new entr' + (unsynced.length === 1 ? 'y' : 'ies') + ' synced');
       return;
     }
-    sendToSheets(entries[i]);
+    const entry = unsynced[i];
+    sendToSheets(entry);
+    synced.push(entry.id);
+    localStorage.setItem('noir_synced', JSON.stringify(synced));
     i++;
-    setTimeout(syncNext, 400); // small delay between each to avoid overwhelming GAS
+    setTimeout(syncNext, 500);
   }
   syncNext();
 }
