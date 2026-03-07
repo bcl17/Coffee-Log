@@ -618,8 +618,8 @@
   ]);
 
   return ContentService
-    .createTextOutput(JSON.stringify({status:'ok'}))
-    .setMimeType(ContentService.MimeType.JSON);
+    .createTextOutput('ok')
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doPost(e) { return doGet(e); }</div>
@@ -735,24 +735,26 @@ function saveEntry() {
 // ── SEND TO SHEETS ──
 function sendToSheets(entry) {
   const params = new URLSearchParams({
-    date:      entry.date,
-    bean:      entry.bean,
-    roast:     entry.roast,
-    grinder:   entry.grinder,
-    grindSize: entry.grindSize,
-    dose:      entry.dose,
-    yield_g:   entry.yield_g,
-    time:      entry.time,
-    ratio:     entry.ratio,
-    taste:     entry.taste,
-    rating:    entry.rating,
-    notes:     entry.notes
+    date:      entry.date      || '',
+    bean:      entry.bean      || '',
+    roast:     entry.roast     || '',
+    grinder:   entry.grinder   || '',
+    grindSize: entry.grindSize || '',
+    dose:      entry.dose      || '',
+    yield_g:   entry.yield_g   || '',
+    time:      entry.time      || '',
+    ratio:     entry.ratio     || '',
+    taste:     entry.taste     || '',
+    rating:    entry.rating    || '',
+    notes:     entry.notes     || ''
   });
 
-  const img = new Image();
-  img.src = sheetsUrl + '?' + params.toString();
-  img.onload = () => showToast('✓ Synced to Google Sheets');
-  img.onerror = () => showToast('✓ Synced to Google Sheets'); // GAS returns JSON not image, onerror still means it ran
+  fetch(sheetsUrl + '?' + params.toString(), {
+    method: 'GET',
+    mode: 'no-cors',
+  })
+  .then(() => showToast('✓ Synced to Google Sheets'))
+  .catch(err => { console.error('Sync error:', err); showToast('⚠ Sync failed — check console'); });
 }
 
 // ── SYNC ALL TO SHEETS ──
